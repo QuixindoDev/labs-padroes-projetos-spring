@@ -13,7 +13,7 @@ import java.util.List;
 public class ClienteRestController {
 
     @Autowired
-    ClienteService clienteService;
+    private ClienteService clienteService;
 
     @GetMapping
     public ResponseEntity<Iterable<Cliente>> buscarTodos(){
