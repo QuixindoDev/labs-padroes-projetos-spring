@@ -1,5 +1,7 @@
 package com.digitalinnovation.gof.servive.impl;
 
+import com.digitalinnovation.gof.exceptions.ClienteNaoEncontradoException;
+import com.digitalinnovation.gof.exceptions.RequisicaoInvalidaException;
 import com.digitalinnovation.gof.model.Cliente;
 import com.digitalinnovation.gof.model.Endereco;
 import com.digitalinnovation.gof.repository.ClienteRepository;
@@ -31,6 +33,12 @@ public class ClienteService implements com.digitalinnovation.gof.servive.Cliente
     @Override
     public Cliente buscarPorId(Long id) {
         Optional<Cliente> cliente = clienteRepository.findById(id);
+
+        if (id == null)
+            throw new RequisicaoInvalidaException();
+        else if (cliente.isEmpty())
+            throw new ClienteNaoEncontradoException();
+
         return cliente.get();
     }
 
@@ -40,28 +48,46 @@ public class ClienteService implements com.digitalinnovation.gof.servive.Cliente
     }
 
     @Override
-    public void atualizar(Long id, Cliente cliente) {
-        //Buscar o Cliente por ID, caso nao exista.
-        Optional<Cliente> clienteDb = clienteRepository.findById(id);
-        if (clienteDb.isPresent()){
-            //Verificar se o Endereco do Cliente ja existe (pelo CEP)
-            //Caso nao exista, integrar com o ViaCEP e persistir o retorno.
-            //Alterar o Cliente, vinculando o enderco (novo ou existente).
-            salvarClienteComCep(cliente);
+    public void deletar(Long id) {
+        //Pesquisar Cliente por id, caso nao exista.
+        var cliente = clienteRepository.findById(id);
+        if (id == null)
+            throw new RequisicaoInvalidaException();
+        else if (cliente.isEmpty()) {
+            throw new ClienteNaoEncontradoException();
         }
+
+        clienteRepository.deleteById(id);
     }
 
     @Override
-    public void deletar(Long id) {
-        //Pesquisar Cliente por id, caso nao exista.
-        clienteRepository.deleteById(id);
+    public void atualizar(Long id, Cliente cliente) {
+        //Buscar o Cliente por ID, caso nao exista.
+        var clienteDb = clienteRepository.findById(id);
+        if (id == null)
+            throw new ClienteNaoEncontradoException("Precisa digitar um id valido");
+        else if (clienteDb.isEmpty())
+            throw new ClienteNaoEncontradoException();
+
+        salvarClienteComCep(cliente);
+    }
+
+    public boolean isCepValido(String cep) {
+        return cep != null && cep.matches("\\d{8}");
     }
 
     private void salvarClienteComCep(Cliente cliente) {
         var cep = cliente.getEndereco().getCep();
+        if (!isCepValido(cep))
+            throw new ClienteNaoEncontradoException("O CEP fornecido é inválido");
+
         Endereco enderco = enderecoRepository.findById(cep).orElseGet(() -> {
             //Caso nao exista, integrar com o ViaCEP e persistir o retorno.
             Endereco novoEndereco = viaCepService.consultarCep(cep);
+
+            if (novoEndereco == null || novoEndereco.getCep() == null || novoEndereco.getCep().isEmpty())
+                throw new ClienteNaoEncontradoException("Não foi possível encontrar um endereço válido para o CEP fornecido");
+
             enderecoRepository.save(novoEndereco);
             return novoEndereco;
         });
