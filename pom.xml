@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>labs-padroes-projetso-spring</artifactId>
+	<artifactId>labs-padroes-projetos-spring</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>labs-padroes-projetso-spring</name>
 	<description>Exemplos de padroes de projetos com spring</description>
